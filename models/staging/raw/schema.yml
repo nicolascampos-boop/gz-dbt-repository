@@ -26,7 +26,7 @@ sources:
             description: "Quantity of products sold"
         tests:
           - unique:
-              column_name: "CONCAT(orders_id, products_id)"
+              column_name: "CONCAT(orders_id, pdt_id)"
 
       - name: product
         identifier: raw_gz_product
@@ -44,7 +44,7 @@ sources:
         identifier: raw_gz_ship
         description: "Products ship by Greenweez"
         columns:
-          - name: ship_id
+          - name: orders_id
             description: "Unique ship identifier"
             tests:
               - unique
