@@ -51,7 +51,9 @@ daily as (
         SUM(purchase_cost)                       as purchase_cost,
         SUM(shipping_fee)                        as shipping_fee,
         SUM(ship_cost)                           as ship_cost,
-        SUM(quantity)                            as quantity
+        SUM(quantity)                            as quantity,
+        SUM(margin)               as margin
+
     from joined
     group by date_date
 
