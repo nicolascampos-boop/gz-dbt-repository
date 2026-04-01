@@ -12,6 +12,7 @@ sources:
       - name: sales
         identifier: raw_gz_sales
         description: "Sales of Greenweez. One row per product_id found in each orders_id"
+        loaded_at_field: date_date
         config:
           loaded_at_field: date_date
           freshness:
