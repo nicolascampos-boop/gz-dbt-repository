@@ -6,10 +6,13 @@ sources:
     schema: gz_raw_data
     loader: bigquery
     description: "Raw data from the Greenweez platform"
+    freshness:
+      warn_after: {count: 12, period: hour}
     tables:
       - name: sales
         identifier: raw_gz_sales
         description: "Sales of Greenweez. One row per product_id found in each orders_id"
+        loaded_at_field: date_date
         columns:
           - name: date_date
             description: "Date of purchase"
@@ -50,6 +53,81 @@ sources:
             description: "Fee charged to the customer for shipping"
           - name: ship_cost
             description: "Actual cost of shipping paid by Greenweez"
+      - name: adwords
+        identifier: raw_gz_adwords
+        description: "Google Adwords advertising campaign data"
+        columns:
+          - name: date_date
+            description: "Date of the campaign"
+          - name: paid_source
+            description: "Advertising platform name"
+          - name: campaign_key
+            description: "Unique campaign identifier"
+          - name: camPGN_name
+            description: "Campaign name, raw with typo"
+          - name: ads_cost
+            description: "Cost of ads as string, needs casting"
+          - name: impression
+            description: "Number of impressions"
+          - name: click
+            description: "Number of clicks"
+
+      - name: bing
+        identifier: raw_gz_bing
+        description: "Bing advertising campaign data"
+        columns:
+          - name: date_date
+            description: "Date of the campaign"
+          - name: paid_source
+            description: "Advertising platform name"
+          - name: campaign_key
+            description: "Unique campaign identifier"
+          - name: camPGN_name
+            description: "Campaign name, raw with typo"
+          - name: ads_cost
+            description: "Cost of ads as string, needs casting"
+          - name: impression
+            description: "Number of impressions"
+          - name: click
+            description: "Number of clicks"
+
+      - name: criteo
+        identifier: raw_gz_criteo
+        description: "Criteo advertising campaign data"
+        columns:
+          - name: date_date
+            description: "Date of the campaign"
+          - name: paid_source
+            description: "Advertising platform name"
+          - name: campaign_key
+            description: "Unique campaign identifier"
+          - name: camPGN_name
+            description: "Campaign name, raw with typo"
+          - name: ads_cost
+            description: "Cost of ads as string, needs casting"
+          - name: impression
+            description: "Number of impressions"
+          - name: click
+            description: "Number of clicks"
+
+      - name: facebook
+        identifier: raw_gz_facebook
+        description: "Facebook advertising campaign data"
+        columns:
+          - name: date_date
+            description: "Date of the campaign"
+          - name: paid_source
+            description: "Advertising platform name"
+          - name: campaign_key
+            description: "Unique campaign identifier"
+          - name: camPGN_name
+            description: "Campaign name, raw with typo"
+          - name: ads_cost
+            description: "Cost of ads as string, needs casting"
+          - name: impression
+            description: "Number of impressions"
+          - name: click
+            description: "Number of clicks"
 
 models:
   - name: int_sales_margin
@@ -163,3 +241,121 @@ models:
         description: "Total shipping costs paid by Greenweez on that day"
       - name: quantity
         description: "Total quantity of products sold on that day"
+  - name: int_campaigns
+    description: "Combined advertising campaign data from all four platforms. One row per campaign per day per platform"
+    columns:
+      - name: date_date
+        description: "Date of the campaign"
+        tests:
+          - not_null
+      - name: paid_source
+        description: "Advertising platform name. One of adwords, bing, criteo or facebook"
+        tests:
+          - not_null
+      - name: campaign_key
+        description: "Campaign identifier"
+        tests:
+          - not_null
+      - name: campaign_name
+        description: "Clean campaign name with typo fixed"
+        tests:
+          - not_null
+      - name: ads_cost
+        description: "Cost of the ads in float format"
+        tests:
+          - not_null
+      - name: impression
+        description: "Number of times the ad was shown"
+      - name: click
+        description: "Number of times the ad was clicked"
+    tests:
+      - unique:
+          column_name: "CONCAT(campaign_key, date_date, paid_source)"
+  - name: int_campaigns_day
+    description: "Daily aggregation of all advertising campaign data across all platforms"
+    columns:
+      - name: date_date
+        description: "Date of the campaigns. Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: ads_cost
+        description: "Total advertising cost across all platforms and campaigns on that day"
+        tests:
+          - not_null
+      - name: impression
+        description: "Total number of impressions across all platforms and campaigns on that day"
+      - name: click
+        description: "Total number of clicks across all platforms and campaigns on that day"
+  - name: finance_campaigns_day
+    description: "Daily financial report enriched with advertising campaign data for the finance team"
+    columns:
+      - name: date
+        description: "Date of transactions. Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: revenue
+        description: "Total revenue across all orders on that day"
+        tests:
+          - not_null
+      - name: purchase_cost
+        description: "Total purchase cost across all orders on that day"
+      - name: margin
+        description: "Total margin before shipping and advertising costs"
+      - name: shipping_fee
+        description: "Total shipping fees collected from customers on that day"
+      - name: ship_cost
+        description: "Total shipping costs paid by Greenweez on that day"
+      - name: operational_margin
+        description: "Total operational margin after shipping costs on that day"
+      - name: average_basket
+        description: "Average order value on that day"
+      - name: quantity
+        description: "Total quantity of products sold on that day"
+      - name: ads_cost
+        description: "Total advertising cost across all platforms on that day"
+      - name: ads_impression
+        description: "Total ad impressions across all platforms on that day"
+      - name: ads_clicks
+        description: "Total ad clicks across all platforms on that day"
+      - name: ads_margin
+        description: "Operational margin minus advertising costs. Calculated as operational_margin minus ads_cost"
+        tests:
+          - not_null     
+  - name: finance_campaigns_month
+    description: "Monthly financial report enriched with advertising data for the finance team"
+    columns:
+      - name: datemonth
+        description: "First day of the month. Primary key"
+        tests:
+          - unique
+          - not_null
+      - name: revenue
+        description: "Total revenue for the month"
+        tests:
+          - not_null
+      - name: purchase_cost
+        description: "Total purchase cost for the month"
+      - name: margin
+        description: "Total margin for the month before shipping and advertising"
+      - name: shipping_fee
+        description: "Total shipping fees collected for the month"
+      - name: ship_cost
+        description: "Total shipping costs paid for the month"
+      - name: operational_margin
+        description: "Total operational margin for the month"
+      - name: average_basket
+        description: "Average daily revenue for the month"
+      - name: quantity
+        description: "Total quantity of products sold for the month"
+      - name: ads_cost
+        description: "Total advertising cost for the month"
+      - name: ads_impression
+        description: "Total ad impressions for the month"
+      - name: ads_clicks
+        description: "Total ad clicks for the month"
+      - name: ads_margin
+        description: "Total ads margin for the month. Operational margin minus ads cost"
+        tests:
+          - not_null
